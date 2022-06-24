@@ -1,0 +1,24 @@
+name: Publish to GHCR
+
+on:
+  workflow_dispatch:
+
+env:
+  CI_IMAGE: ghcr.io/${{ github.repository }}/pot:latest
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.github_token }}
+      - run: docker pull ${{ env.CI_IMAGE }} || true
+      - uses: actions/checkout@v3
+      - run: docker build . --cache-from ${{ env.CI_IMAGE }} --file docker/Dockerfile --tag ${{ env.CI_IMAGE }}
+        working-directory: ingress
+      - run: docker push ${{ env.CI_IMAGE }}
